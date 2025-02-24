@@ -130,7 +130,7 @@ const StudentIntakeForm = () => {
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-semibold text-foreground">
-            Student Upgrade Form
+            Student Intake Form
           </h1>
 <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
   <i>Please fill in your details, select the subjects you wish to upgrade (Physics, Mathematics, Maths Lit, or Life Sciences), and provide your current and desired marks. This will help us assist you in achieving your academic goals.</i>
