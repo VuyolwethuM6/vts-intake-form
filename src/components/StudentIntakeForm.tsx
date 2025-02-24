@@ -120,7 +120,7 @@ const StudentIntakeForm = () => {
       </div> */}
           <div className="flex justify-center">
       <img 
-        src="/vts-logo.jpg" 
+        src="/vts-logo.png" 
         alt="Logo" 
         className="w-25 h-25"
       />
