@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import ProgressSteps from './ProgressSteps';
-import { ArrowLeft, ArrowRight, GraduationCap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, GraduationCap, Calendar, MapPin, CreditCard } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const FORM_STEPS = [
   'Person Info',
@@ -15,13 +16,23 @@ const FORM_STEPS = [
 ];
 
 const SUBJECTS = [
-  { id: 'mathematics', name: 'Mathematics' },
-  { id: 'physics', name: 'Physics' },
-  { id: 'chemistry', name: 'Chemistry' },
-  { id: 'biology', name: 'Biology' },
-  { id: 'english', name: 'English' },
-  { id: 'history', name: 'History' }
+  { id: 'mathematics', name: 'Mathematics', schedule: 'Monday & Wednesday, 09:00-11:00' },
+  { id: 'physics', name: 'Physics', schedule: 'Tuesday & Thursday, 09:00-11:00' },
+  { id: 'chemistry', name: 'Maths Literacy', schedule: 'Monday & Wednesday, 11:00-13:00' },
+  { id: 'biology', name: 'Life Sciences', schedule: 'Tuesday & Thursday, 11:00-13:00' }
 ];
+
+const VENUE_ADDRESS = "16 T Mfelane Street";
+
+const ACCOUNT_DETAILS = {
+  bankName: "Capitec Bank",
+  accountHolder: "Mr V Mabhuleka",
+  accountNumber: "1614497182",
+  branchCode: "0733913206",
+  reference: "Student Name + Subject"
+};
+
+const COST_PER_SUBJECT = 400; // R400 per subject
 
 interface SubjectMarks {
   currentMarks: string;
@@ -40,13 +51,20 @@ const StudentIntakeForm = () => {
     email: '',
     phone: '',
     school: '',
+    guardianName: '', 
     guardianContact: '',
     selectedSubjects: [] as string[],
     marks: {} as MarksData,
+    paymentDate: '',
+    assessmentSubject: ''
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -93,6 +111,14 @@ const StudentIntakeForm = () => {
     // Here you would typically send the data to your backend
   };
 
+  const calculateTotalCost = () => {
+    return formData.selectedSubjects.length * COST_PER_SUBJECT;
+  };
+
+  const getPaymentReference = () => {
+    return `${formData.firstName} ${formData.lastName}`;
+  };
+
   const isStepValid = () => {
     switch (currentStep) {
       case 1:
@@ -104,6 +130,9 @@ const StudentIntakeForm = () => {
           formData.marks[subject]?.currentMarks && 
           formData.marks[subject]?.targetMarks
         );
+      case 4:
+        return formData.paymentDate !== '' && 
+               (formData.selectedSubjects.length > 0 ? formData.assessmentSubject !== '' : true);
       default:
         return true;
     }
@@ -112,29 +141,23 @@ const StudentIntakeForm = () => {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-start py-12 px-4 bg-background text-foreground">
       {/* Branding */}
-      {/* <div className="w-full max-w-3xl mb-16 flex flex-col items-center justify-center space-y-6">
-        <div className="w-20 h-20 rounded-full bg-gold flex items-center justify-center">
-          <GraduationCap className="w-10 h-10 text-white" />
-        </div>
-        <h2 className="text-3xl font-semibold text-gold">Student Connect</h2>
-      </div> */}
-          <div className="flex justify-center">
-      <img 
-        src="/vts-logo.png" 
-        alt="Logo" 
-        className="w-25 h-25"
-      />
-    </div>
+      <div className="flex justify-center">
+        <img 
+          src="/vts-logo.png" 
+          alt="Logo" 
+          className="w-25 h-25"
+        />
+      </div>
 
       <div className="w-full max-w-3xl space-y-10 px-4">
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-semibold text-foreground">
-            Student Intake Form
+            Student Upgrade Form
           </h1>
-<p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-  <i>Please fill in your details, select the subjects you wish to upgrade (Physics, Mathematics, Maths Lit, or Life Sciences), and provide your current and desired marks. This will help us assist you in achieving your academic goals.</i>
-</p>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <i>Please fill in your details, select the subjects you wish to upgrade (Physics, Mathematics, Maths Lit, or Life Sciences), and provide your current and desired marks. This will help us assist you in achieving your academic goals.</i>
+          </p>
         </div>
 
         {/* Progress Steps */}
@@ -207,6 +230,19 @@ const StudentIntakeForm = () => {
                     name="school"
                     placeholder="Enter your school name"
                     value={formData.school}
+                    onChange={handleInputChange}
+                    required
+                    className="bg-secondary/50"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="school">Parent/Guardian Name</Label>
+                  <Input
+                    id="guardianName"
+                    name="guardianName"
+                    placeholder="Enter parent/guardian name"
+                    value={formData.guardianName}
                     onChange={handleInputChange}
                     required
                     className="bg-secondary/50"
@@ -341,6 +377,158 @@ const StudentIntakeForm = () => {
                           })}
                         </div>
                       </div>
+                      
+                      {/* Venue Card */}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-gold">Venue Information</h4>
+                        <div className="bg-secondary/20 rounded-lg p-4">
+                          <div className="flex items-start space-x-3">
+                            <MapPin className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
+                            <div>
+                              <h5 className="font-medium">VTS Academy</h5>
+                              <p className="text-sm text-muted-foreground">{VENUE_ADDRESS}</p>
+                              <p className="text-xs text-muted-foreground mt-2">All classes and assessments will be held at this venue.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Class Schedule */}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-gold">Class Schedule</h4>
+                        <div className="bg-secondary/20 rounded-lg p-4">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-border">
+                                <th className="text-left pb-2">Subject</th>
+                                <th className="text-left pb-2">Schedule</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {formData.selectedSubjects.map((subjectId) => {
+                                const subject = SUBJECTS.find(s => s.id === subjectId);
+                                return (
+                                  <tr key={subjectId} className="border-b border-border/50">
+                                    <td className="py-2">{subject?.name}</td>
+                                    <td className="py-2">{subject?.schedule}</td>
+                                  </tr>
+                                );
+                              })}
+                              {/* Friday Assessment Row */}
+                              <tr>
+                                <td className="py-3 font-medium text-gold">Friday Assessments</td>
+                                <td className="py-3">
+                                  {formData.selectedSubjects.length > 0 ? (
+                                    <div className="flex flex-col space-y-2">
+                                      <p className="text-sm text-muted-foreground mb-1">We will be writing on the selected subjects:</p>
+                                      <ul className="list-disc pl-5 text-sm text-muted-foreground">
+                                        {formData.selectedSubjects.map((subjectId) => {
+                                          const subject = SUBJECTS.find(s => s.id === subjectId);
+                                          return subject ? <li key={subjectId} className="text-white">{subject.name}</li> : null;
+                                        })}
+                                      </ul>
+                                      <p className="text-xs text-muted-foreground">Friday, 09:00-11:00</p>
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-muted-foreground">No subjects selected</p>
+                                  )}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      
+                      {/* Cost Calculation Section */}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-gold">Cost Summary</h4>
+                        <div className="bg-secondary/20 rounded-lg p-4">
+                          <div className="space-y-2">
+                            {formData.selectedSubjects.map((subjectId) => {
+                              const subject = SUBJECTS.find(s => s.id === subjectId);
+                              return (
+                                <div key={subjectId} className="flex justify-between">
+                                  <span>{subject?.name}</span>
+                                  <span>R{COST_PER_SUBJECT}</span>
+                                </div>
+                              );
+                            })}
+                            <div className="border-t border-border pt-2 mt-2 flex justify-between font-medium">
+                              <span>Total Cost</span>
+                              <span>R{calculateTotalCost()}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Account Details */}
+                          <div className="mt-6 space-y-4">
+                            <div className="flex items-start space-x-3">
+                              <CreditCard className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
+                              <div>
+                                <h5 className="font-medium">Payment Information</h5>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Please make payment to the following account:
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-secondary/30 rounded-lg p-4 border border-border/70">
+                              <table className="w-full text-sm">
+                                <tbody>
+                                  <tr>
+                                    <td className="py-1 text-muted-foreground">Bank:</td>
+                                    <td className="py-1 font-medium">{ACCOUNT_DETAILS.bankName}</td>
+                                  </tr>
+                                  <tr>
+                                    <td className="py-1 text-muted-foreground">Account Holder:</td>
+                                    <td className="py-1 font-medium">{ACCOUNT_DETAILS.accountHolder}</td>
+                                  </tr>
+                                  <tr>
+                                    <td className="py-1 text-muted-foreground">Account Number:</td>
+                                    <td className="py-1 font-medium">{ACCOUNT_DETAILS.accountNumber}</td>
+                                  </tr>
+                                  <tr>
+                                    <td className="py-1 text-muted-foreground">Phone Number:</td>
+                                    <td className="py-1 font-medium">{ACCOUNT_DETAILS.branchCode}</td>
+                                  </tr>
+                                  <tr>
+                                    <td className="py-1 text-muted-foreground">Reference:</td>
+                                    <td className="py-1 font-medium">{getPaymentReference()}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                            
+                            <p className="text-sm text-muted-foreground">
+                              Please use your name as a reference when making the payment. After payment, please email proof of payment to <span className="font-medium">payments@vtsacademy.co.za</span>.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Payment Date Section */}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-gold">Payment Date</h4>
+                        <div className="bg-secondary/20 rounded-lg p-4">
+                          <div className="space-y-4">
+                            <p className="text-sm">Please select a date when you will be able to make the payment:</p>
+                            <div className="flex items-center space-x-2">
+                              <Calendar className="h-5 w-5 text-muted-foreground" />
+                              <Input
+                                type="date"
+                                name="paymentDate"
+                                value={formData.paymentDate}
+                                onChange={handleInputChange}
+                                min={new Date().toISOString().split('T')[0]}
+                                className="bg-secondary/50"
+                                required
+                              />
+                            </div>
+                            {formData.paymentDate && (
+                              <p className="text-sm">Payment scheduled for: <span className="font-medium">{new Date(formData.paymentDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}</span></p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -362,6 +550,7 @@ const StudentIntakeForm = () => {
                 <Button
                   type="button"
                   onClick={handleSubmit}
+                  disabled={!isStepValid()}
                   className="w-[120px] bg-gold hover:bg-gold-dark text-white"
                 >
                   Submit
